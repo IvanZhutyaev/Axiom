@@ -74,6 +74,12 @@ pub enum AggFunc {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct MatchArm {
+    pub pattern: Literal,
+    pub body: Expr,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Expr {
     Literal(Literal),
     Ident(String),
@@ -85,6 +91,20 @@ pub enum Expr {
     },
     Unary { op: UnOp, expr: Box<Expr> },
     Call { name: String, args: Vec<Expr> },
+    If {
+        cond: Box<Expr>,
+        then_branch: Box<Expr>,
+        else_branch: Box<Expr>,
+    },
+    Match {
+        scrutinee: Box<Expr>,
+        arms: Vec<MatchArm>,
+    },
+    Let {
+        name: String,
+        value: Box<Expr>,
+        body: Box<Expr>,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

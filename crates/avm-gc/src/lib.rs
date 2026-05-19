@@ -1,6 +1,9 @@
 //! Generational GC: nursery (copying) + old generation (mark-sweep).
 
+pub mod tlab;
+
 use std::sync::atomic::{AtomicUsize, Ordering};
+pub use tlab::{with_tlab, Tlab};
 
 #[derive(Debug, Clone, Copy)]
 pub struct GcConfig {

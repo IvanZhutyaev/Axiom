@@ -11,6 +11,23 @@ message JobResponse {
   string status = 2;
 }
 
+message MetricsRequest {
+  string job_id = 1;
+}
+
+message MetricsPoint {
+  int64 ts_ms = 1;
+  double events_per_sec = 2;
+  double watermark_lag_ms = 3;
+}
+
+message PipelineChunk {
+  bytes axc_bytes = 1;
+  string name = 2;
+}
+
 service AxiomJobs {
   rpc Submit(JobRequest) returns (JobResponse);
+  rpc StreamMetrics(MetricsRequest) returns (stream MetricsPoint);
+  rpc SubmitPipeline(stream PipelineChunk) returns (JobResponse);
 }

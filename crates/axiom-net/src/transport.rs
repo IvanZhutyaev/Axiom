@@ -49,6 +49,19 @@ impl UdpTransport {
             next_conn: Arc::new(Mutex::new(1)),
         })
     }
+
+    /// Raw datagram send (gossip / control plane).
+    pub async fn send_to(&self, peer: SocketAddr, data: &[u8]) -> Result<(), TransportError> {
+        self.socket.send_to(data, peer).await?;
+        Ok(())
+    }
+
+    /// Raw datagram receive.
+    pub async fn recv_from(&self) -> Result<(SocketAddr, Vec<u8>), TransportError> {
+        let mut buf = vec![0u8; 65535];
+        let (len, from) = self.socket.recv_from(&mut buf).await?;
+        Ok((from, buf[..len].to_vec()))
+    }
 }
 
 #[async_trait]

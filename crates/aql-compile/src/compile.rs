@@ -6,6 +6,7 @@ use aql_syntax::ast::{BinOp, Expr, Literal, Stage, UnOp};
 use aql_syntax::{parse, Program};
 use avm_bytecode::module::AxcModule;
 use avm_bytecode::opcode::{Instruction, Operand, Opcode};
+use avm_bytecode::AXC_VERSION_V2;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -31,6 +32,7 @@ pub fn compile(source: &str) -> Result<CompileResult, CompileError> {
 
 fn emit_bytecode(program: &Program, plan: &crate::logical::LogicalPlan) -> AxcModule {
     let mut module = AxcModule::default();
+    module.version = AXC_VERSION_V2;
     module.pipeline_name = "pipeline".into();
 
     for stage in &program.stages {
@@ -78,7 +80,7 @@ fn emit_bytecode(program: &Program, plan: &crate::logical::LogicalPlan) -> AxcMo
             } => {
                 module.code.push(Instruction::with_operand(
                     Opcode::Push,
-                    Operand::U64(*size_ms as i64),
+                    Operand::I64(*size_ms as i64),
                 ));
                 for agg in aggregates {
                     if let Some(arg) = &agg.arg {
@@ -89,6 +91,34 @@ fn emit_bytecode(program: &Program, plan: &crate::logical::LogicalPlan) -> AxcMo
                 module.operators.push(avm_bytecode::module::OperatorMeta {
                     name: "window".into(),
                     kind: "window".into(),
+                });
+            }
+            Stage::Map { projection } => {
+                module.code.push(Instruction::new(Opcode::NewStruct));
+                for binding in projection {
+                    emit_expr(&mut module, &binding.expr);
+                    module.code.push(Instruction::with_operand(
+                        Opcode::SetField,
+                        Operand::Str(binding.name.clone()),
+                    ));
+                }
+                module.code.push(Instruction::new(Opcode::Emit));
+                module.operators.push(avm_bytecode::module::OperatorMeta {
+                    name: "map".into(),
+                    kind: "map".into(),
+                });
+            }
+            Stage::Watermark { field, delay_ms } => {
+                let idx = module.constants.len() as u32;
+                module.constants.push(field.clone());
+                module.code.push(Instruction::with_operand(Opcode::Push, Operand::U32(idx)));
+                module.code.push(Instruction::with_operand(
+                    Opcode::Push,
+                    Operand::I64(*delay_ms as i64),
+                ));
+                module.operators.push(avm_bytecode::module::OperatorMeta {
+                    name: format!("watermark:{field}"),
+                    kind: "watermark".into(),
                 });
             }
             _ => {
@@ -171,6 +201,90 @@ fn emit_expr(module: &mut AxcModule, expr: &Expr) {
                 Opcode::Call,
                 Operand::Str(name.clone()),
             ));
+        }
+        Expr::If {
+            cond,
+            then_branch,
+            else_branch,
+        } => {
+            emit_expr(module, cond);
+            let jmp_false = module.code.len();
+            module
+                .code
+                .push(Instruction::with_operand(Opcode::JmpIfNot, Operand::U32(0)));
+            emit_expr(module, then_branch);
+            let jmp_end = module.code.len();
+            module
+                .code
+                .push(Instruction::with_operand(Opcode::Jmp, Operand::U32(0)));
+            let else_start = module.code.len() as u32;
+            if let Some(Instruction {
+                operand: Some(Operand::U32(ref mut off)),
+                ..
+            }) = module.code.get_mut(jmp_false)
+            {
+                *off = else_start;
+            }
+            emit_expr(module, else_branch);
+            let end = module.code.len() as u32;
+            if let Some(Instruction {
+                operand: Some(Operand::U32(ref mut off)),
+                ..
+            }) = module.code.get_mut(jmp_end)
+            {
+                *off = end;
+            }
+        }
+        Expr::Let { name, value, body } => {
+            emit_expr(module, value);
+            let slot = module.constants.len() as u32;
+            module.constants.push(name.clone());
+            module
+                .code
+                .push(Instruction::with_operand(Opcode::StoreLocal, Operand::U32(slot)));
+            emit_expr(module, body);
+        }
+        Expr::Match { scrutinee, arms } => {
+            emit_expr(module, scrutinee);
+            module.code.push(Instruction::new(Opcode::Dup));
+            let mut end_jumps = Vec::new();
+            for (i, arm) in arms.iter().enumerate() {
+                if i > 0 {
+                    module.code.push(Instruction::new(Opcode::Dup));
+                }
+                emit_expr(module, &Expr::Literal(arm.pattern.clone()));
+                module.code.push(Instruction::new(Opcode::Eq));
+                let jmp_next = module.code.len();
+                module
+                    .code
+                    .push(Instruction::with_operand(Opcode::JmpIfNot, Operand::U32(0)));
+                module.code.push(Instruction::new(Opcode::Pop));
+                emit_expr(module, &arm.body);
+                let jmp_end = module.code.len();
+                module
+                    .code
+                    .push(Instruction::with_operand(Opcode::Jmp, Operand::U32(0)));
+                end_jumps.push(jmp_end);
+                let next_arm = module.code.len() as u32;
+                if let Some(Instruction {
+                    operand: Some(Operand::U32(ref mut off)),
+                    ..
+                }) = module.code.get_mut(jmp_next)
+                {
+                    *off = next_arm;
+                }
+            }
+            module.code.push(Instruction::new(Opcode::Pop));
+            let end = module.code.len() as u32;
+            for jmp in end_jumps {
+                if let Some(Instruction {
+                    operand: Some(Operand::U32(ref mut off)),
+                    ..
+                }) = module.code.get_mut(jmp)
+                {
+                    *off = end;
+                }
+            }
         }
     }
 }

@@ -485,6 +485,57 @@ impl<'a> Parser<'a> {
 
     fn parse_prefix(&mut self) -> Result<Expr, ParseError> {
         match self.peek() {
+            Some(TokenKind::If) => {
+                self.bump();
+                self.expect_kind(TokenKind::LParen)?;
+                let cond = self.parse_expr(0)?;
+                self.expect_kind(TokenKind::Comma)?;
+                let then_branch = self.parse_expr(0)?;
+                self.expect_kind(TokenKind::Comma)?;
+                let else_branch = self.parse_expr(0)?;
+                self.expect_kind(TokenKind::RParen)?;
+                Ok(Expr::If {
+                    cond: Box::new(cond),
+                    then_branch: Box::new(then_branch),
+                    else_branch: Box::new(else_branch),
+                })
+            }
+            Some(TokenKind::Let) => {
+                self.bump();
+                let name = self.parse_ident()?;
+                self.expect_kind(TokenKind::Eq)?;
+                let value = self.parse_expr(0)?;
+                self.expect_kind(TokenKind::In)?;
+                let body = self.parse_expr(0)?;
+                Ok(Expr::Let {
+                    name,
+                    value: Box::new(value),
+                    body: Box::new(body),
+                })
+            }
+            Some(TokenKind::Match) => {
+                self.bump();
+                self.expect_kind(TokenKind::LParen)?;
+                let scrutinee = self.parse_expr(0)?;
+                self.expect_kind(TokenKind::RParen)?;
+                self.expect_kind(TokenKind::LBrace)?;
+                let mut arms = Vec::new();
+                loop {
+                    let pattern = self.parse_number()?;
+                    self.expect_kind(TokenKind::FatArrow)?;
+                    let body = self.parse_expr(0)?;
+                    arms.push(crate::ast::MatchArm { pattern, body });
+                    if self.peek() != Some(&TokenKind::Comma) {
+                        break;
+                    }
+                    self.bump();
+                }
+                self.expect_kind(TokenKind::RBrace)?;
+                Ok(Expr::Match {
+                    scrutinee: Box::new(scrutinee),
+                    arms,
+                })
+            }
             Some(TokenKind::Minus) => {
                 self.bump();
                 Ok(Expr::Unary {

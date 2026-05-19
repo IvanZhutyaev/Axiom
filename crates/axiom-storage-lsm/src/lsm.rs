@@ -116,6 +116,13 @@ impl LsmStore {
         self.tables.push(table);
         self.table_files.push(file);
         self.memtable = MemTable::new();
+        if self.table_files.len() >= 4 {
+            let inputs = self.table_files.clone();
+            let _ = crate::compaction::compact_level(&self.path, 1, &inputs);
+            self.tables.clear();
+            self.table_files.clear();
+            self.load_existing()?;
+        }
         Ok(())
     }
 

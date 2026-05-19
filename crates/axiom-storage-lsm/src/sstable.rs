@@ -1,5 +1,6 @@
 //! Sorted string table on disk (simple format).
 
+use crate::bloom::BloomFilter;
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::{Read, Write};
@@ -15,6 +16,7 @@ pub enum SsError {
 #[derive(Debug, Default)]
 pub struct SsTable {
     pub entries: BTreeMap<Vec<u8>, Vec<u8>>,
+    pub bloom: BloomFilter,
 }
 
 impl SsTable {
@@ -23,10 +25,12 @@ impl SsTable {
         I: Iterator<Item = (Vec<u8>, Vec<u8>)>,
     {
         let mut entries = BTreeMap::new();
+        let mut bloom = BloomFilter::with_capacity(1024, 0.01);
         for (k, v) in iter {
+            bloom.insert(&k);
             entries.insert(k, v);
         }
-        Self { entries }
+        Self { entries, bloom }
     }
 
     pub fn write_to_file(&self, path: &Path) -> Result<(), SsError> {
@@ -59,10 +63,17 @@ impl SsTable {
             pos += vl;
             entries.insert(key, val);
         }
-        Ok(Self { entries })
+        let mut bloom = BloomFilter::with_capacity(entries.len().max(1), 0.01);
+        for k in entries.keys() {
+            bloom.insert(k);
+        }
+        Ok(Self { entries, bloom })
     }
 
     pub fn get(&self, key: &[u8]) -> Option<&[u8]> {
+        if !self.bloom.might_contain(key) {
+            return None;
+        }
         self.entries.get(key).map(|v| v.as_slice())
     }
 }

@@ -84,4 +84,14 @@ impl JitCompiler {
     pub fn deoptimize(&mut self, trace_id: u32) {
         self.compiled.remove(&trace_id);
     }
+
+    /// On-stack replacement entry when a hot loop guard fails.
+    pub fn osr_deopt(&mut self, trace_id: u32) -> bool {
+        if self.compiled.contains_key(&trace_id) {
+            self.deoptimize(trace_id);
+            true
+        } else {
+            false
+        }
+    }
 }

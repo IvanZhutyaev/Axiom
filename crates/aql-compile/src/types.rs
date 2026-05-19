@@ -77,6 +77,28 @@ impl TypeChecker {
             }
             Expr::Unary { expr, .. } => Self::infer_expr(expr),
             Expr::Call { .. } => Ok(Type::Unknown),
+            Expr::If {
+                cond,
+                then_branch,
+                else_branch,
+            } => {
+                Self::infer_expr(cond)?;
+                Self::infer_expr(then_branch)?;
+                Self::infer_expr(else_branch)?;
+                Ok(Type::Unknown)
+            }
+            Expr::Match { scrutinee, arms } => {
+                Self::infer_expr(scrutinee)?;
+                for arm in arms {
+                    Self::infer_expr(&arm.body)?;
+                }
+                Ok(Type::Unknown)
+            }
+            Expr::Let { value, body, .. } => {
+                Self::infer_expr(value)?;
+                Self::infer_expr(body)?;
+                Ok(Type::Unknown)
+            }
         }
     }
 

@@ -1,5 +1,7 @@
 //! Kubernetes operator for AxiomCluster and AxiomJob CRDs.
 
+pub mod kube;
+
 use serde::{Deserialize, Serialize};
 
 pub const CRD_GROUP: &str = "axiom.io";

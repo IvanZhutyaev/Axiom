@@ -1,5 +1,7 @@
 //! AQL language server helpers for Monaco integration.
 
+pub mod ws;
+
 use aql_compile::compile;
 use aql_syntax::parse;
 

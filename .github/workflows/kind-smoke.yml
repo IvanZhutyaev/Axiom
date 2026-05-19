@@ -1,0 +1,18 @@
+name: Kind smoke
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * 1"
+
+jobs:
+  kind:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo build --release -p axiom
+      - uses: helm/kind-action@v1
+        with:
+          cluster_name: axiom-ci
+      - run: kubectl cluster-info

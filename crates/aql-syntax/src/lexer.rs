@@ -74,6 +74,18 @@ pub enum TokenKind {
     Union,
     #[token("split")]
     Split,
+    #[token("if")]
+    If,
+    #[token("else")]
+    Else,
+    #[token("match")]
+    Match,
+    #[token("let")]
+    Let,
+    #[token("in")]
+    In,
+    #[token("=>")]
+    FatArrow,
     #[token("tumbling")]
     Tumbling,
     #[token("sliding")]

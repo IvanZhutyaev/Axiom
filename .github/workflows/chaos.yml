@@ -17,3 +17,12 @@ jobs:
           cargo test -p axiom-raft -p axiom-engine -p axiom-integration-tests -- --nocapture
       - name: Compile workspace release
         run: cargo build --workspace --release
+  chaos-mesh:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Chaos Mesh placeholder
+        run: |
+          echo "Install Chaos Mesh in soak cluster for pod-kill / network-delay / disk-slow"
+          echo "See docs/admin/chaos.md"

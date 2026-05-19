@@ -128,9 +128,13 @@ pub async fn serve(bind: &str, state: Arc<RwLock<ApiState>>) -> anyhow::Result<(
     let app = Router::new()
         .route("/health", get(health))
         .route("/metrics", get(prometheus_metrics))
+        .route("/api/v1/metrics", get(metrics_json))
         .route("/api/v1/cluster", get(cluster_status))
         .route("/api/v1/jobs", post(submit_job).get(list_jobs))
-        .route("/api/v1/jobs/:id", get(get_job))
+        .route(
+            "/api/v1/jobs/:id",
+            get(get_job).delete(delete_job),
+        )
         .route("/api/v1/schemas", post(register_schema).get(list_schemas))
         .route("/api/v1/schemas/:id", get(get_schema))
         .route(
@@ -180,6 +184,32 @@ async fn cluster_status(
 
 async fn prometheus_metrics(State(state): State<Arc<RwLock<ApiState>>>) -> String {
     state.read().await.metrics.render_prometheus()
+}
+
+async fn metrics_json(
+    State(state): State<Arc<RwLock<ApiState>>>,
+    headers: HeaderMap,
+) -> Result<Json<axiom_metrics::MetricsSnapshot>, StatusCode> {
+    let s = state.read().await;
+    let _ = check_auth(&s, &headers)?;
+    Ok(Json(s.metrics.snapshot()))
+}
+
+async fn delete_job(
+    State(state): State<Arc<RwLock<ApiState>>>,
+    headers: HeaderMap,
+    Path(id): Path<String>,
+) -> Result<StatusCode, StatusCode> {
+    let mut s = state.write().await;
+    let claims = check_auth(&s, &headers)?;
+    if claims.role == "viewer" {
+        return Err(StatusCode::FORBIDDEN);
+    }
+    if s.jobs.remove(&id).is_some() {
+        Ok(StatusCode::NO_CONTENT)
+    } else {
+        Err(StatusCode::NOT_FOUND)
+    }
 }
 
 async fn dev_token(State(state): State<Arc<RwLock<ApiState>>>) -> Json<serde_json::Value> {

@@ -1,10 +1,9 @@
-replicaCount: 3
+replicas: 3
+apiPort: 8080
+gossipPort: 7946
 image:
   repository: axiom
   tag: "0.1.0"
-service:
-  apiPort: 8080
-  gossipPort: 7946
 resources:
   limits:
     cpu: "2"

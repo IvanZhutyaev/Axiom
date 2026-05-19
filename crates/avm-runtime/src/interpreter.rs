@@ -2,6 +2,7 @@
 
 use avm_bytecode::module::AxcModule;
 use avm_bytecode::opcode::{Instruction, Operand, Opcode};
+use axiom_ml::Predictor;
 use crate::value::Value;
 use std::collections::HashMap;
 use thiserror::Error;
@@ -31,6 +32,9 @@ pub struct Interpreter {
     module: AxcModule,
     current_event: Option<Value>,
     input_queue: Vec<Value>,
+    call_stack: Vec<usize>,
+    building_struct: Option<HashMap<String, Value>>,
+    predictor: Predictor,
 }
 
 impl Interpreter {
@@ -42,6 +46,9 @@ impl Interpreter {
             module,
             current_event: None,
             input_queue: Vec::new(),
+            call_stack: Vec::new(),
+            building_struct: None,
+            predictor: Predictor::default(),
         }
     }
 
@@ -183,16 +190,111 @@ impl Interpreter {
                     result.halted = true;
                     return Ok(result);
                 }
-                Opcode::Predict => {
-                    // stub until ML phase
-                    self.stack.push(Value::Float(0.0));
+                Opcode::Call => {
+                    let name = match instr.operand {
+                        Some(Operand::Str(ref s)) => s.clone(),
+                        _ => String::new(),
+                    };
+                    self.call_stack.push(self.pc);
+                    self.builtin_call(&name)?;
                 }
-                Opcode::Serialize | Opcode::Deserialize => {
-                    let v = self.stack.pop().ok_or(RunError::Underflow)?;
+                Opcode::Ret | Opcode::Return => {
+                    if let Some(ret_pc) = self.call_stack.pop() {
+                        self.pc = ret_pc;
+                    }
+                }
+                Opcode::NewStruct => {
+                    self.building_struct = Some(HashMap::new());
+                    self.stack.push(Value::Struct(HashMap::new()));
+                }
+                Opcode::SetField => {
+                    let field = match instr.operand {
+                        Some(Operand::Str(s)) => s,
+                        _ => return Err(RunError::Underflow),
+                    };
+                    let val = self.stack.pop().ok_or(RunError::Underflow)?;
+                    if let Some(Value::Struct(ref mut m)) = self.stack.last_mut() {
+                        m.insert(field, val);
+                    } else if let Some(ref mut m) = self.building_struct {
+                        m.insert(field.clone(), val);
+                        self.stack.push(Value::Struct(m.clone()));
+                    }
+                }
+                Opcode::NewArray => {
+                    let n = match instr.operand {
+                        Some(Operand::U32(n)) => n as usize,
+                        Some(Operand::U8(n)) => n as usize,
+                        _ => 0,
+                    };
+                    let mut arr = Vec::with_capacity(n);
+                    for _ in 0..n {
+                        arr.push(self.stack.pop().ok_or(RunError::Underflow)?);
+                    }
+                    arr.reverse();
+                    self.stack.push(Value::Array(arr));
+                }
+                Opcode::NewMap => {
+                    self.stack.push(Value::Struct(HashMap::new()));
+                }
+                Opcode::ArrayGet => {
+                    let idx = match self.stack.pop().ok_or(RunError::Underflow)? {
+                        Value::Int(i) => i as usize,
+                        Value::Float(f) => f as usize,
+                        _ => 0,
+                    };
+                    let arr = self.stack.pop().ok_or(RunError::Underflow)?;
+                    let v = match arr {
+                        Value::Array(a) => a.get(idx).cloned().unwrap_or(Value::Null),
+                        _ => Value::Null,
+                    };
                     self.stack.push(v);
                 }
-                _ => {
-                    // unimplemented ops are no-ops in phase 0
+                Opcode::ArraySet => {
+                    let val = self.stack.pop().ok_or(RunError::Underflow)?;
+                    let idx = match self.stack.pop().ok_or(RunError::Underflow)? {
+                        Value::Int(i) => i as usize,
+                        _ => 0,
+                    };
+                    if let Value::Array(ref mut a) = self
+                        .stack
+                        .last_mut()
+                        .ok_or(RunError::Underflow)?
+                    {
+                        if idx < a.len() {
+                            a[idx] = val;
+                        } else {
+                            a.resize(idx + 1, Value::Null);
+                            a[idx] = val;
+                        }
+                    }
+                }
+                Opcode::ArrayLen => {
+                    let arr = self.stack.pop().ok_or(RunError::Underflow)?;
+                    let n = match arr {
+                        Value::Array(a) => a.len() as i64,
+                        _ => 0,
+                    };
+                    self.stack.push(Value::Int(n));
+                }
+                Opcode::Predict => {
+                    let features_val = self.stack.pop().ok_or(RunError::Underflow)?;
+                    let feats = value_to_features(&features_val);
+                    let score = self.predictor.infer(&feats);
+                    self.stack.push(Value::Float(score));
+                }
+                Opcode::Serialize => {
+                    let v = self.stack.pop().ok_or(RunError::Underflow)?;
+                    let json = serde_json::to_value(&v).unwrap_or(serde_json::Value::Null);
+                    self.stack.push(Value::Str(json.to_string()));
+                }
+                Opcode::Deserialize => {
+                    let raw = self.stack.pop().ok_or(RunError::Underflow)?;
+                    let s = match raw {
+                        Value::Str(s) => s,
+                        _ => String::new(),
+                    };
+                    let v: Value = serde_json::from_str(&s).unwrap_or(Value::Null);
+                    self.stack.push(v);
                 }
             }
         }
@@ -228,6 +330,20 @@ impl Interpreter {
         let b = self.stack.pop().ok_or(RunError::Underflow)?;
         let a = self.stack.pop().ok_or(RunError::Underflow)?;
         self.stack.push(f(a, b));
+        Ok(())
+    }
+
+    fn builtin_call(&mut self, name: &str) -> Result<(), RunError> {
+        match name {
+            "predict" => {
+                let _model = self.stack.pop().ok_or(RunError::Underflow)?;
+                self.stack.push(Value::Float(0.0));
+            }
+            "avg" | "sum" | "count" | "min" | "max" => {
+                // aggregates handled at window layer; noop at call site
+            }
+            _ => {}
+        }
         Ok(())
     }
 }
@@ -270,6 +386,14 @@ fn cmp_eq(a: &Value, b: &Value) -> bool {
 
 fn cmp_lt(a: &Value, b: &Value) -> bool {
     to_f64(a) < to_f64(b)
+}
+
+fn value_to_features(v: &Value) -> Vec<f64> {
+    match v {
+        Value::Array(a) => a.iter().map(|x| to_f64(x)).collect(),
+        Value::Struct(m) => m.values().map(|x| to_f64(x)).collect(),
+        _ => vec![to_f64(v)],
+    }
 }
 
 #[cfg(test)]

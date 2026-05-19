@@ -7,7 +7,10 @@ license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+aql-syntax.workspace = true
 avm-bytecode.workspace = true
+avm-gc.workspace = true
+axiom-ml.workspace = true
 axiom-schema.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true

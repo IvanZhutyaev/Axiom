@@ -13,3 +13,13 @@ serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
 thiserror.workspace = true
 tokio = { workspace = true, features = ["sync"] }
+futures = { workspace = true, optional = true }
+
+[features]
+default = []
+kafka = ["rdkafka", "futures"]
+
+[dependencies.rdkafka]
+version = "0.36"
+optional = true
+features = ["cmake-build", "ssl-vendored"]

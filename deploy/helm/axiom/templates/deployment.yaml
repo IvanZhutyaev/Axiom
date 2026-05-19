@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-axiom
+  labels:
+    app: axiom
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: axiom
+  template:
+    metadata:
+      labels:
+        app: axiom
+    spec:
+      containers:
+        - name: axiom
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: {{ .Values.apiPort }}
+              name: http
+            - containerPort: {{ .Values.gossipPort }}
+              name: gossip
+          env:
+            - name: AXIOM_DATA_DIR
+              value: /data
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          emptyDir: {}

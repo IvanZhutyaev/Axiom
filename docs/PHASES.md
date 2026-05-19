@@ -1,41 +1,29 @@
-# Axiom implementation phases (status)
+# Axiom implementation phases
 
-## Phase 0 — Foundation ✅
+**Authoritative readiness:** [READINESS.md](READINESS.md) (per-requirement status).
 
-- AQL lexer/parser/compiler, `.axc`, AVM interpreter
-- Schema registry + binary codec
-- UDP transport, fragmentation, gossip (SWIM)
-- Local log + LSM, all-in-one node
+Phases follow [техническое задание.md](../техническое%20задание.md) §6 (~3.5–4 years).
 
-## Phase 1 — Distributed core ✅
+## Phase 0 — Foundation (in progress)
 
-- `axiom-raft`: elections, append entries, snapshots stub
-- `axiom-engine`: scheduler, barriers, idempotency store
-- Connectors: memory, HTTP, Kafka (offset stub)
-- REST: jobs, schemas, connectors, cluster, JWT dev auth
-- Prometheus `/metrics`, `axctl cluster up`
+Target: TZ pipeline on all-in-one; log+LSM restart; gossip over UDP.
 
-## Phase 2 — Performance & ML ✅
+- AQL/AVM: parser, compiler, interpreter, `.axc` v1+v2
+- Schema codec, local log, LSM with compaction
+- UDP transport, SWIM gossip (UDP + sim tests)
 
-- `avm-gc`: generational nursery + old gen
-- `avm-jit`: trace profiling + native stub (`llvm` feature reserved)
-- `axiom-ml`: linear, GBDT stub, MLP, anomaly detector
-- `axiom-wasm`: wasmtime behind `runtime` feature
+## Phase 1 — Distributed core (in progress)
 
-## Phase 3 — UI & ecosystem ✅
+Target: 3-node exactly-once; rdkafka; full REST/axctl.
 
-- React UI: Monaco + React Flow graph, job submit
-- gRPC (`axiom-grpc` + tonic)
-- CRDs + operator reconcile functions
-- Helm chart skeleton
+## Phase 2 — Performance and ML (in progress)
 
-## Phase 4 — Stabilization ✅ (CI)
+Target: GC in runtime; JIT feature; ML predict; wasm connectors.
 
-- GitHub Actions: fmt, clippy, test, UI build
-- Nightly chaos workflow (sim tests)
-- Integration tests: pipeline, checkpoint, 3-node gossip
+## Phase 3 — UI and ecosystem (in progress)
 
-## Production hardening (post-milestone)
+Target: Monaco+LSP; gRPC streams; kube operator; Helm; SDK.
 
-- Real Kafka (`rdkafka`), full LLVM JIT, kube-rs controller loop
-- OAuth2 provider, chaos mesh on Kind, 1B event soak tests
+## Phase 4 — Stabilization (in progress)
+
+Target: CI matrix, Kind, chaos workflow, §9 harnesses.

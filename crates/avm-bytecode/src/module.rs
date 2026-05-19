@@ -51,7 +51,7 @@ pub enum AxcError {
     Json(#[from] serde_json::Error),
 }
 
-pub fn save_axc(module: &AxcModule, w: &mut impl Write) -> Result<(), AxcError> {
+pub fn save_axc_v1(module: &AxcModule, w: &mut impl Write) -> Result<(), AxcError> {
     w.write_all(AXC_MAGIC)?;
     w.write_all(&module.version.to_le_bytes())?;
     let payload = serde_json::to_vec(module)?;
@@ -63,7 +63,7 @@ pub fn save_axc(module: &AxcModule, w: &mut impl Write) -> Result<(), AxcError> 
     Ok(())
 }
 
-pub fn load_axc(r: &mut impl Read) -> Result<AxcModule, AxcError> {
+pub fn load_axc_v1(r: &mut impl Read) -> Result<AxcModule, AxcError> {
     let mut magic = [0u8; 4];
     r.read_exact(&mut magic)?;
     if &magic != AXC_MAGIC {
@@ -101,8 +101,8 @@ mod tests {
         m.pipeline_name = "sensor".into();
         m.code.push(Instruction::new(Opcode::Halt));
         let mut buf = Vec::new();
-        save_axc(&m, &mut buf).unwrap();
-        let decoded = load_axc(&mut buf.as_slice()).unwrap();
+        save_axc_v1(&m, &mut buf).unwrap();
+        let decoded = load_axc_v1(&mut buf.as_slice()).unwrap();
         assert_eq!(decoded.pipeline_name, "sensor");
     }
 }
