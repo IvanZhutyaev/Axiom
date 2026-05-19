@@ -1,0 +1,110 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/axiom",
+    "crates/axiom-node",
+    "crates/aql-syntax",
+    "crates/aql-compile",
+    "crates/aql-lsp",
+    "crates/avm-bytecode",
+    "crates/avm-runtime",
+    "crates/avm-gc",
+    "crates/avm-jit",
+    "crates/axiom-schema",
+    "crates/axiom-net",
+    "crates/axiom-gossip",
+    "crates/axiom-storage-log",
+    "crates/axiom-storage-lsm",
+    "crates/axiom-raft",
+    "crates/axiom-engine",
+    "crates/axiom-connectors",
+    "crates/axiom-wasm",
+    "crates/axiom-ml",
+    "crates/axiom-api",
+    "crates/axiom-grpc",
+    "crates/axiom-metrics",
+    "crates/axiom-operator",
+    "crates/axctl",
+    "crates/axiom-proto",
+    "crates/axiom-integration-tests",
+    "crates/axiom-bench",
+]
+default-members = ["crates/axiom", "crates/axctl"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/axiom-platform/axiom"
+rust-version = "1.79"
+
+[workspace.dependencies]
+anyhow = "1"
+async-trait = "0.1"
+axum = { version = "0.8", features = ["json", "macros"] }
+bytes = "1"
+chrono = { version = "0.4", features = ["serde"] }
+clap = { version = "4", features = ["derive", "env"] }
+crc32fast = "1"
+criterion = { version = "0.5", features = ["html_reports"] }
+dashmap = "6"
+futures = "0.3"
+hex = "0.4"
+hyper = { version = "1", features = ["server", "http1"] }
+hyper-util = { version = "0.1", features = ["tokio", "server-auto"] }
+libloading = "0.8"
+logos = "0.15"
+lru = "12"
+prost = "0.13"
+prost-types = "0.13"
+proptest = "1"
+rand = "0.8"
+rcgen = "0.13"
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+rustls-pemfile = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+snap = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["full"] }
+tokio-rustls = "0.26"
+tonic = "0.12"
+tonic-build = "0.12"
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors", "trace"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+wasmtime = "29"
+
+aql-syntax = { path = "crates/aql-syntax" }
+aql-compile = { path = "crates/aql-compile" }
+aql-lsp = { path = "crates/aql-lsp" }
+avm-bytecode = { path = "crates/avm-bytecode" }
+avm-runtime = { path = "crates/avm-runtime" }
+avm-gc = { path = "crates/avm-gc" }
+avm-jit = { path = "crates/avm-jit" }
+axiom-schema = { path = "crates/axiom-schema" }
+axiom-net = { path = "crates/axiom-net" }
+axiom-gossip = { path = "crates/axiom-gossip" }
+axiom-storage-log = { path = "crates/axiom-storage-log" }
+axiom-storage-lsm = { path = "crates/axiom-storage-lsm" }
+axiom-raft = { path = "crates/axiom-raft" }
+axiom-engine = { path = "crates/axiom-engine" }
+axiom-connectors = { path = "crates/axiom-connectors" }
+axiom-wasm = { path = "crates/axiom-wasm" }
+axiom-ml = { path = "crates/axiom-ml" }
+axiom-api = { path = "crates/axiom-api" }
+axiom-grpc = { path = "crates/axiom-grpc" }
+axiom-metrics = { path = "crates/axiom-metrics" }
+axiom-node = { path = "crates/axiom-node" }
+axiom-proto = { path = "crates/axiom-proto" }
+axiom-operator = { path = "crates/axiom-operator" }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+
+[profile.bench]
+inherits = "release"

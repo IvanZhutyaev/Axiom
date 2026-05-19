@@ -1,0 +1,15 @@
+[package]
+name = "axiom-storage-lsm"
+description = "LSM key-value store for operator state"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+bytes.workspace = true
+serde = { workspace = true, features = ["derive"] }
+thiserror.workspace = true
+
+[dev-dependencies]
+tempfile = "3"

@@ -1,0 +1,16 @@
+[package]
+name = "aql-compile"
+description = "AQL compiler: typecheck, optimize, emit bytecode"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+aql-syntax.workspace = true
+avm-bytecode.workspace = true
+serde = { workspace = true, features = ["derive"] }
+thiserror.workspace = true
+
+[dev-dependencies]
+aql-syntax = { workspace = true }

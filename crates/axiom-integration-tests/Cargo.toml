@@ -1,0 +1,22 @@
+[package]
+name = "axiom-integration-tests"
+description = "Integration and e2e tests"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
+
+[dependencies]
+aql-compile.workspace = true
+avm-bytecode.workspace = true
+avm-runtime.workspace = true
+axiom-engine.workspace = true
+axiom-raft.workspace = true
+uuid.workspace = true
+axiom-gossip.workspace = true
+axiom-net.workspace = true
+axiom-storage-log.workspace = true
+axiom-storage-lsm.workspace = true
+tempfile = "3"
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

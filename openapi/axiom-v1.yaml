@@ -1,0 +1,43 @@
+openapi: 3.0.3
+info:
+  title: Axiom API
+  version: v1
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: OK
+  /api/v1/jobs:
+    get:
+      summary: List jobs
+      responses:
+        "200":
+          description: Job list
+    post:
+      summary: Submit job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                aql:
+                  type: string
+      responses:
+        "200":
+          description: Job created
+  /api/v1/jobs/{id}:
+    get:
+      summary: Get job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Job details

@@ -1,0 +1,15 @@
+[package]
+name = "avm-jit"
+description = "LLVM tracing JIT for AVM (phase 2)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[features]
+default = []
+llvm = []
+
+[dependencies]
+avm-bytecode.workspace = true
+thiserror.workspace = true

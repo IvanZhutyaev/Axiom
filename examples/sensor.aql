@@ -1,0 +1,5 @@
+source "sensor_data"
+|> filter(temperature > 30.0)
+|> window(tumbling, size=5s)
+   aggregate(avg_temp = avg(temperature), count = count(*))
+|> sink "alerts"

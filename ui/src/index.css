@@ -1,0 +1,91 @@
+:root {
+  color-scheme: dark light;
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+body {
+  margin: 0;
+  background: #0f1419;
+  color: #e7ecf3;
+}
+
+.app {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.card {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  border-radius: 8px;
+  background: #1a2332;
+  border: 1px solid #2a3544;
+}
+
+.error {
+  color: #f87171;
+}
+
+.hint {
+  opacity: 0.75;
+  font-size: 0.9rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.panel {
+  background: #1a2332;
+  border: 1px solid #2a3544;
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.panel h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.status {
+  margin-left: 1rem;
+  opacity: 0.85;
+}
+
+button {
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  border: none;
+  background: #3b82f6;
+  color: #fff;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.flow-panel {
+  min-height: 320px;
+}
+
+@media (prefers-color-scheme: light) {
+  body {
+    background: #f5f7fa;
+    color: #1a2332;
+  }
+  .card {
+    background: #fff;
+    border-color: #d8dee9;
+  }
+}

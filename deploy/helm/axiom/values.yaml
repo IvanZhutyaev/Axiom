@@ -1,0 +1,13 @@
+replicaCount: 3
+image:
+  repository: axiom
+  tag: "0.1.0"
+service:
+  apiPort: 8080
+  gossipPort: 7946
+resources:
+  limits:
+    cpu: "2"
+    memory: 4Gi
+monitoring:
+  prometheus: true

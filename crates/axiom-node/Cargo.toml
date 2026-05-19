@@ -1,0 +1,29 @@
+[package]
+name = "axiom-node"
+description = "Axiom node runtime (master/worker/storage/all-in-one)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+aql-compile.workspace = true
+avm-runtime.workspace = true
+avm-bytecode.workspace = true
+axiom-api.workspace = true
+axiom-engine.workspace = true
+axiom-grpc.workspace = true
+axiom-gossip.workspace = true
+axiom-raft.workspace = true
+axiom-metrics.workspace = true
+axiom-net.workspace = true
+axiom-schema.workspace = true
+axiom-storage-log.workspace = true
+axiom-storage-lsm.workspace = true
+clap.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+uuid.workspace = true

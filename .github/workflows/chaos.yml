@@ -1,0 +1,19 @@
+name: Chaos (nightly)
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  chaos-sim:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Unit + integration (simulated partition)
+        run: |
+          cargo test -p axiom-raft -p axiom-engine -p axiom-integration-tests -- --nocapture
+      - name: Compile workspace release
+        run: cargo build --workspace --release

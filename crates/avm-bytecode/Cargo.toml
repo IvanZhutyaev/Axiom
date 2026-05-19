@@ -1,0 +1,16 @@
+[package]
+name = "avm-bytecode"
+description = "AVM bytecode definitions and .axc serialization"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+crc32fast.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true

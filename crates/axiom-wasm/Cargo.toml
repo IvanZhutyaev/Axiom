@@ -1,0 +1,18 @@
+[package]
+name = "axiom-wasm"
+description = "Wasm sandbox for untrusted connectors"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[features]
+default = []
+runtime = ["dep:wasmtime"]
+
+[dependencies]
+thiserror.workspace = true
+
+[dependencies.wasmtime]
+workspace = true
+optional = true

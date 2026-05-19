@@ -1,0 +1,18 @@
+[package]
+name = "axiom-storage-log"
+description = "Append-only event log with segments"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+bytes.workspace = true
+crc32fast.workspace = true
+serde = { workspace = true, features = ["derive"] }
+snap.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["fs", "io-util", "sync"] }
+
+[dev-dependencies]
+tempfile = "3"

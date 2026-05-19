@@ -1,0 +1,16 @@
+syntax = "proto3";
+package axiom.v1;
+
+message JobRequest {
+  string aql = 1;
+  string name = 2;
+}
+
+message JobResponse {
+  string id = 1;
+  string status = 2;
+}
+
+service AxiomJobs {
+  rpc Submit(JobRequest) returns (JobResponse);
+}

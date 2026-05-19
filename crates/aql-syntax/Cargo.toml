@@ -1,0 +1,15 @@
+[package]
+name = "aql-syntax"
+description = "AQL lexer, parser, and AST"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+logos.workspace = true
+serde = { workspace = true, features = ["derive"] }
+thiserror.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
